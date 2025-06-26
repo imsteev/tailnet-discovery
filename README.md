@@ -2,6 +2,9 @@
 
 Web interface for managing services on your Tailscale network. Add hosts, manage services, and monitor connectivity.
 
+<img width="1078" alt="Screenshot 2025-06-26 at 3 13 42 PM" src="https://github.com/user-attachments/assets/03947332-867c-4942-ad29-e78836a69cf1" />
+
+
 ## Quick Start
 
 ```bash
