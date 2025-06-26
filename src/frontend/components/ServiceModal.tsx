@@ -66,7 +66,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
         onServiceSaved();
       } else {
         alert(
-          editingService ? "Failed to update service" : "Failed to add service"
+          editingService ? "Failed to update service" : "Failed to add service",
         );
       }
     } catch (error) {
@@ -80,7 +80,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
 
     if (
       !confirm(
-        `Are you sure you want to delete the service on ${editingService.ip}:${editingService.port}?`
+        `Are you sure you want to delete the service on ${editingService.ip}:${editingService.port}?`,
       )
     ) {
       return;
@@ -91,7 +91,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
         `/api/services/${editingService.ip}/${editingService.port}`,
         {
           method: "DELETE",
-        }
+        },
       );
 
       if (response.ok) {

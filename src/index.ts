@@ -63,9 +63,9 @@ function migrateConfigToDatabase(db: Database): void {
         Object.entries(host.ports).forEach(
           ([port, serviceName]: [string, any]) => {
             insertService.run(ip, parseInt(port), serviceName, host.name);
-          }
+          },
         );
-      }
+      },
     );
 
     console.log("✅ Successfully migrated config.json to database");
@@ -127,7 +127,7 @@ app.use(
   serveStatic({
     root: "./dist",
     rewriteRequestPath: (path) => path.replace(/^\/static/, ""),
-  })
+  }),
 );
 
 // Main page - serve React app
@@ -141,12 +141,6 @@ app.get("/check/:ip/:port", async (c) => {
   const reachable = await checkPort(ip, port);
 
   return c.json({ reachable });
-});
-
-// API endpoint to get configuration
-app.get("/api/config", (c) => {
-  const currentConfig = loadConfig(db);
-  return c.json(currentConfig);
 });
 
 // API endpoint to add a service
@@ -174,7 +168,7 @@ app.delete("/api/services/:ip/:port", (c) => {
     const port = c.req.param("port");
 
     const deleteService = db.prepare(
-      "DELETE FROM services WHERE ip = ? AND port = ?"
+      "DELETE FROM services WHERE ip = ? AND port = ?",
     );
     const result = deleteService.run(ip, parseInt(port));
 
@@ -190,10 +184,8 @@ app.delete("/api/services/:ip/:port", (c) => {
 
 // API endpoint to get all services
 app.get("/api/services", (c) => {
-  const services = db
-    .prepare("SELECT * FROM services ORDER BY host_name, ip, port")
-    .all();
-  return c.json(services);
+  const currentConfig = loadConfig(db);
+  return c.json(currentConfig);
 });
 
 console.log("🚀 Tailnet Discovery Server starting on http://localhost:3000");

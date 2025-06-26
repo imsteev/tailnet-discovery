@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import ServiceCard from './ServiceCard';
+import React, { useState, useEffect } from "react";
+import ServiceCard from "./ServiceCard";
 
 interface TailnetHost {
   name: string;
@@ -21,6 +21,7 @@ interface ServiceGridProps {
   config: Config;
   onAddService: (ip: string, hostName: string) => void;
   onEditService: (service: Service) => void;
+  onTestService: (ip: string, port: string) => void;
   onRefreshConfig: () => void;
 }
 
@@ -28,7 +29,7 @@ const ServiceGrid: React.FC<ServiceGridProps> = ({
   config,
   onAddService,
   onEditService,
-  onRefreshConfig
+  onTestService,
 }) => {
   const [portStatuses, setPortStatuses] = useState<Record<string, boolean>>({});
 
@@ -47,12 +48,12 @@ const ServiceGrid: React.FC<ServiceGridProps> = ({
     const newStatuses: Record<string, boolean> = {};
 
     Object.entries(config.tailnet_hosts).forEach(([ip, host]) => {
-      Object.keys(host.ports).forEach(port => {
+      Object.keys(host.ports).forEach((port) => {
         const key = `${ip}:${port}`;
         promises.push(
-          checkPort(ip, port).then(isReachable => {
+          checkPort(ip, port).then((isReachable) => {
             newStatuses[key] = isReachable;
-          })
+          }),
         );
       });
     });
@@ -77,6 +78,7 @@ const ServiceGrid: React.FC<ServiceGridProps> = ({
           portStatuses={portStatuses}
           onAddService={onAddService}
           onEditService={onEditService}
+          onTestService={onTestService}
         />
       ))}
     </div>

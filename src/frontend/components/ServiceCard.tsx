@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface TailnetHost {
   name: string;
@@ -18,6 +18,7 @@ interface ServiceCardProps {
   portStatuses: Record<string, boolean>;
   onAddService: (ip: string, hostName: string) => void;
   onEditService: (service: Service) => void;
+  onTestService: (ip: string, port: string) => void;
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({
@@ -25,35 +26,46 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   host,
   portStatuses,
   onAddService,
-  onEditService
+  onEditService,
+  onTestService,
 }) => {
   const getStatusClass = (ip: string, port: string) => {
     const key = `${ip}:${port}`;
     const status = portStatuses[key];
-    if (status === undefined) return 'px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
-    return status ? 'px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800' : 'px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800';
+    if (status === undefined)
+      return "px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800";
+    return status
+      ? "px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+      : "px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800";
   };
 
   const getStatusText = (ip: string, port: string) => {
     const key = `${ip}:${port}`;
     const status = portStatuses[key];
-    if (status === undefined) return 'Checking...';
-    return status ? 'Up' : 'Down';
+    if (status === undefined) return "Checking...";
+    return status ? "Up" : "Down";
   };
 
   return (
-    <div className="bg-white my-5 p-5 rounded-lg shadow-sm">
-      <div className="text-lg font-bold text-primary-500 mb-2.5">{host.name}</div>
+    <div className="bg-white border border-gray-300 my-5 p-5 rounded-lg shadow-sm">
+      <div className="text-lg font-bold text-primary-500 mb-2.5">
+        {host.name}
+      </div>
       <div className="text-gray-500 text-sm">{ip}</div>
       <div className="mt-4">
         {Object.entries(host.ports).map(([port, name]) => (
-          <div key={port} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+          <div
+            key={port}
+            className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+          >
             <div className="flex items-center gap-2.5">
-              <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-xs">{port}</span>
+              <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-xs">
+                {port}
+              </span>
               <span className="font-medium">
-                <a 
-                  href={`http://${ip}:${port}`} 
-                  target="_blank" 
+                <a
+                  href={`http://${ip}:${port}`}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary-500 no-underline hover:underline"
                 >
@@ -61,14 +73,22 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 </a>
                 <button
                   className="bg-warning-500 text-white border-none px-2 py-1 rounded text-xs ml-2.5 cursor-pointer hover:bg-warning-600 transition-colors"
-                  onClick={() => onEditService({
-                    ip,
-                    port: parseInt(port),
-                    name,
-                    host_name: host.name
-                  })}
+                  onClick={() =>
+                    onEditService({
+                      ip,
+                      port: parseInt(port),
+                      name,
+                      host_name: host.name,
+                    })
+                  }
                 >
                   Edit
+                </button>
+                <button
+                  className="bg-primary-500 text-white border-none px-2 py-1 rounded text-xs ml-2 cursor-pointer hover:bg-primary-600 transition-colors"
+                  onClick={() => onTestService(ip, port)}
+                >
+                  Test
                 </button>
               </span>
             </div>
