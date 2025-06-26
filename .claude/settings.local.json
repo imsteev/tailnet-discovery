@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:docs.excalidraw.com)"
+      "WebFetch(domain:docs.excalidraw.com)",
+      "Bash(npx prettier:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

@@ -1,0 +1,1 @@
+- Always run prettier on JSX/TSX/CSS/HTML files
