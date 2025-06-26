@@ -3,7 +3,8 @@
     "allow": [
       "WebFetch(domain:docs.excalidraw.com)",
       "Bash(npx prettier:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }

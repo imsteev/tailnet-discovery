@@ -22,6 +22,7 @@ interface ServiceGridProps {
   onAddService: (ip: string, hostName: string) => void;
   onEditService: (service: Service) => void;
   onTestService: (ip: string, port: string) => void;
+  onDeleteHost: (ip: string, hostName: string) => void;
   onRefreshConfig: () => void;
 }
 
@@ -30,6 +31,7 @@ const ServiceGrid: React.FC<ServiceGridProps> = ({
   onAddService,
   onEditService,
   onTestService,
+  onDeleteHost,
 }) => {
   const [portStatuses, setPortStatuses] = useState<Record<string, boolean>>({});
 
@@ -79,6 +81,7 @@ const ServiceGrid: React.FC<ServiceGridProps> = ({
           onAddService={onAddService}
           onEditService={onEditService}
           onTestService={onTestService}
+          onDeleteHost={onDeleteHost}
         />
       ))}
     </div>

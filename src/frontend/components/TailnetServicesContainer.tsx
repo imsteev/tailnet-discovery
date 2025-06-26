@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import ServiceGrid from "./ServiceGrid";
 import ServiceModal from "./ServiceModal";
+import HostModal from "./HostModal";
 
 interface TailnetHost {
   name: string;
@@ -21,6 +22,7 @@ interface Service {
 const TailnetServicesContainer: React.FC = () => {
   const [config, setConfig] = useState<Config>({ tailnet_hosts: {} });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHostModalOpen, setIsHostModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [modalPrefilledData, setModalPrefilledData] = useState<{
     ip: string;
@@ -66,6 +68,44 @@ const TailnetServicesContainer: React.FC = () => {
     loadServices();
   };
 
+  const handleAddHost = () => {
+    setIsHostModalOpen(true);
+  };
+
+  const handleHostModalClose = () => {
+    setIsHostModalOpen(false);
+  };
+
+  const handleHostSaved = () => {
+    setIsHostModalOpen(false);
+    loadServices();
+  };
+
+  const handleDeleteHost = async (ip: string, hostName: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete host "${hostName}" and all its services?`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/hosts/${ip}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        loadServices();
+      } else {
+        alert("Failed to delete host");
+      }
+    } catch (error) {
+      console.error("Error deleting host:", error);
+      alert("Error deleting host");
+    }
+  };
+
   const handleTestService = async (ip: string, port: string) => {
     try {
       const response = await fetch(`/check/${ip}/${port}`);
@@ -83,9 +123,9 @@ const TailnetServicesContainer: React.FC = () => {
       <div className="flex gap-2.5 mb-5">
         <button
           className="bg-primary-500 text-white border-none py-2.5 px-5 rounded-md cursor-pointer hover:bg-primary-600 transition-colors"
-          onClick={loadServices}
+          onClick={handleAddHost}
         >
-          Refresh Status
+          Add Host
         </button>
       </div>
 
@@ -94,6 +134,7 @@ const TailnetServicesContainer: React.FC = () => {
         onAddService={handleAddService}
         onEditService={handleEditService}
         onTestService={handleTestService}
+        onDeleteHost={handleDeleteHost}
         onRefreshConfig={loadServices}
       />
 
@@ -103,6 +144,13 @@ const TailnetServicesContainer: React.FC = () => {
           prefilledData={modalPrefilledData}
           onClose={handleCloseModal}
           onServiceSaved={handleServiceSaved}
+        />
+      )}
+
+      {isHostModalOpen && (
+        <HostModal
+          onClose={handleHostModalClose}
+          onHostSaved={handleHostSaved}
         />
       )}
     </>

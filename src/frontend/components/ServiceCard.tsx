@@ -19,6 +19,7 @@ interface ServiceCardProps {
   onAddService: (ip: string, hostName: string) => void;
   onEditService: (service: Service) => void;
   onTestService: (ip: string, port: string) => void;
+  onDeleteHost: (ip: string, hostName: string) => void;
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({
@@ -28,6 +29,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   onAddService,
   onEditService,
   onTestService,
+  onDeleteHost,
 }) => {
   const getStatusClass = (ip: string, port: string) => {
     const key = `${ip}:${port}`;
@@ -48,8 +50,15 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
 
   return (
     <div className="bg-white border border-gray-300 my-5 p-5 rounded-lg shadow-sm">
-      <div className="text-lg font-bold text-primary-500 mb-2.5">
-        {host.name}
+      <div className="flex justify-between items-center mb-2.5">
+        <div className="text-lg font-bold text-primary-500">{host.name}</div>
+        <button
+          className="bg-danger-500 text-white border-none px-2 py-1 rounded text-xs cursor-pointer hover:bg-danger-600 transition-colors"
+          onClick={() => onDeleteHost(ip, host.name)}
+          title="Delete Host"
+        >
+          Delete
+        </button>
       </div>
       <div className="text-gray-500 text-sm">{ip}</div>
       <div className="mt-4">
@@ -71,30 +80,32 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 >
                   {name}
                 </a>
-                <button
-                  className="bg-warning-500 text-white border-none px-2 py-1 rounded text-xs ml-2.5 cursor-pointer hover:bg-warning-600 transition-colors"
-                  onClick={() =>
-                    onEditService({
-                      ip,
-                      port: parseInt(port),
-                      name,
-                      host_name: host.name,
-                    })
-                  }
-                >
-                  Edit
-                </button>
-                <button
-                  className="bg-primary-500 text-white border-none px-2 py-1 rounded text-xs ml-2 cursor-pointer hover:bg-primary-600 transition-colors"
-                  onClick={() => onTestService(ip, port)}
-                >
-                  Test
-                </button>
               </span>
             </div>
-            <span className={getStatusClass(ip, port)}>
-              {getStatusText(ip, port)}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className={getStatusClass(ip, port)}>
+                {getStatusText(ip, port)}
+              </span>
+              <button
+                className="bg-warning-500 text-white border-none px-2 py-1 rounded text-xs cursor-pointer hover:bg-warning-600 transition-colors"
+                onClick={() =>
+                  onEditService({
+                    ip,
+                    port: parseInt(port),
+                    name,
+                    host_name: host.name,
+                  })
+                }
+              >
+                Edit
+              </button>
+              <button
+                className="bg-primary-500 text-white border-none px-2 py-1 rounded text-xs cursor-pointer hover:bg-primary-600 transition-colors"
+                onClick={() => onTestService(ip, port)}
+              >
+                Test
+              </button>
+            </div>
           </div>
         ))}
         <button
