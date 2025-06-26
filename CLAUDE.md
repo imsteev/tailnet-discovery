@@ -1,20 +1,32 @@
 ### General
 
-- When a questionable decision is made, add code comments identified with `(AI)` explaining what the decision was, why it was made, and what future considerations to take into account
+- When a questionable decision is made, explain why using a `(AI)` prefix
 - Always run prettier on JSX/TSX/CSS/HTML files
+- 
 
 ### React
 
 - File organization
-  - One component definition per file. Be consistent with export patterns (e.g, if most components are declared with `export default function ComponentName({ ... })`, do that)
+  - Exported code at top of file
+  - New component:
+  ```tsx
+  interface Props {}
+
+  export default function ComponentName(props?: Props) {
+    // ...
+  }
+  ```
+  - One exported component per file
   - Hoist out functions that do not depend on any component state/props
-- Side effects
-  - Minimize the number of `useEffect` ’s are in the codebase. This should improve reader’s ability to understand application behavior and when things happen
 - State management
-  - Less state is better. Prefer derived values whenever possible
-  - Be thoughtful about undefined / null values. Treat them intentionally (e.g, null could represent a certain fact)
-  - If there's more than 4-5 related pieces of state, consider using a reducer or compact into an object, whichever fits the design more appropriately
+  - Less state is preferred. Derive values whenever possible
+  - Be thoughtful about undefined / null values (e.g, null could represent a certain fact)
+  - Consider using a reducer or object if there's more than 5 separate but related pieces of state
 - Styling
   - General guidance: https://anthonyhobday.com/sideprojects/saferules/
-  - If there is a design system of building block components, use those instead of native html elements (e.g, `<Button ... />` vs `<button>`).
-    - If a design system component doesnt meet requirements, try to customize as necessary, or fallback to native html element.
+  - Prefer using Tailwind
+  - If a design system exists in the codebase, use it as much as possible. Typically these are building block components like Button, Select, Dialog, etc.
+- Components
+  - Factor out components if there's more than 5 separate and unrelated pieces of state
+  - If needed, use a folder to encapsulate related components for better organization
+  - Components that mutate data should have some way to refresh data after performing the operation. This can typically be done by accepting a refresh callback
