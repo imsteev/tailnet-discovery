@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 interface Service {
   ip: string;
@@ -18,13 +18,13 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   editingService,
   prefilledData,
   onClose,
-  onServiceSaved
+  onServiceSaved,
 }) => {
   const [formData, setFormData] = useState({
-    hostName: '',
-    ipAddress: '',
-    portNumber: '',
-    serviceName: ''
+    hostName: "",
+    ipAddress: "",
+    portNumber: "",
+    serviceName: "",
   });
 
   useEffect(() => {
@@ -33,73 +33,82 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
         hostName: editingService.host_name,
         ipAddress: editingService.ip,
         portNumber: editingService.port.toString(),
-        serviceName: editingService.name
+        serviceName: editingService.name,
       });
     } else if (prefilledData) {
       setFormData({
         hostName: prefilledData.hostName,
         ipAddress: prefilledData.ip,
-        portNumber: '',
-        serviceName: ''
+        portNumber: "",
+        serviceName: "",
       });
     }
   }, [editingService, prefilledData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
-      const response = await fetch('/api/services', {
-        method: 'POST',
+      const response = await fetch("/api/services", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ip: formData.ipAddress,
           port: parseInt(formData.portNumber),
           name: formData.serviceName,
-          host_name: formData.hostName
-        })
+          host_name: formData.hostName,
+        }),
       });
 
       if (response.ok) {
         onServiceSaved();
       } else {
-        alert(editingService ? 'Failed to update service' : 'Failed to add service');
+        alert(
+          editingService ? "Failed to update service" : "Failed to add service"
+        );
       }
     } catch (error) {
-      console.error('Error saving service:', error);
-      alert('Error saving service');
+      console.error("Error saving service:", error);
+      alert("Error saving service");
     }
   };
 
   const handleDelete = async () => {
     if (!editingService) return;
-    
-    if (!confirm(`Are you sure you want to delete the service on ${editingService.ip}:${editingService.port}?`)) {
+
+    if (
+      !confirm(
+        `Are you sure you want to delete the service on ${editingService.ip}:${editingService.port}?`
+      )
+    ) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/services/${editingService.ip}/${editingService.port}`, {
-        method: 'DELETE'
-      });
+      const response = await fetch(
+        `/api/services/${editingService.ip}/${editingService.port}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
         onServiceSaved();
       } else {
-        alert('Failed to delete service');
+        alert("Failed to delete service");
       }
     } catch (error) {
-      console.error('Error deleting service:', error);
-      alert('Error deleting service');
+      console.error("Error deleting service:", error);
+      alert("Error deleting service");
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -110,12 +119,19 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" onClick={handleOverlayClick}>
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+      onClick={handleOverlayClick}
+    >
       <div className="bg-white p-5 rounded-lg w-96 max-w-[90%]">
-        <h3 className="text-lg font-semibold mb-4">{editingService ? 'Edit Service' : 'Add New Service'}</h3>
+        <h3 className="text-lg font-semibold mb-4">
+          {editingService ? "Edit Service" : "Add New Service"}
+        </h3>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block mb-1.5 font-medium text-sm">Host Name:</label>
+            <label className="block mb-1.5 font-medium text-sm">
+              Host Name:
+            </label>
             <input
               type="text"
               name="hostName"
@@ -126,7 +142,9 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
             />
           </div>
           <div className="mb-4">
-            <label className="block mb-1.5 font-medium text-sm">IP Address:</label>
+            <label className="block mb-1.5 font-medium text-sm">
+              IP Address:
+            </label>
             <input
               type="text"
               name="ipAddress"
@@ -146,11 +164,17 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
               onChange={handleChange}
               required
               readOnly={!!editingService}
-              className={`w-full p-2 border border-gray-300 rounded box-border focus:outline-none ${editingService ? 'bg-gray-50' : 'focus:ring-2 focus:ring-primary-500'}`}
+              className={`w-full p-2 border border-gray-300 rounded box-border focus:outline-none ${
+                editingService
+                  ? "bg-gray-50"
+                  : "focus:ring-2 focus:ring-primary-500"
+              }`}
             />
           </div>
           <div className="mb-4">
-            <label className="block mb-1.5 font-medium text-sm">Service Name:</label>
+            <label className="block mb-1.5 font-medium text-sm">
+              Service Name:
+            </label>
             <input
               type="text"
               name="serviceName"
@@ -161,8 +185,8 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
             />
           </div>
           <div className="flex gap-2.5 justify-end">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="bg-gray-500 text-white border-none py-2 px-4 rounded cursor-pointer hover:bg-gray-600 transition-colors"
               onClick={onClose}
             >
@@ -177,11 +201,11 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
                 Delete
               </button>
             )}
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="bg-primary-500 text-white border-none py-2 px-4 rounded cursor-pointer hover:bg-primary-600 transition-colors"
             >
-              {editingService ? 'Update Service' : 'Add Service'}
+              {editingService ? "Update Service" : "Add Service"}
             </button>
           </div>
         </form>

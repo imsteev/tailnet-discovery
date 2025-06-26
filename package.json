@@ -4,10 +4,10 @@
   "description": "Discover applications on Tailnet hosts",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "bun run build:css && bun run --watch src/index.ts",
+    "dev": "concurrently \"bun run build:frontend:watch\" \"bun run --watch src/index.ts\"",
     "dev:backend": "bun run --watch src/index.ts --watch config.json",
-    "build:css": "bunx @tailwindcss/cli -i src/frontend/styles.css -o dist/index.css",
-    "build:css:watch": "bunx @tailwindcss/cli -i src/frontend/styles.css -o dist/index.css --watch"
+    "build:frontend": "bun build src/frontend/index.tsx --outdir dist --minify && bunx @tailwindcss/cli -i src/frontend/styles.css -o dist/index.css",
+    "build:frontend:watch": "concurrently \"bun build src/frontend/index.tsx --outdir dist --watch\" \"bunx @tailwindcss/cli -i src/frontend/styles.css -o dist/index.css --watch\""
   },
   "dependencies": {
     "hono": "^4.0.0",
