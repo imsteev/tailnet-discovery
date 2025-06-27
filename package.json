@@ -10,6 +10,7 @@
     "build:frontend:watch": "concurrently \"bun build src/frontend/index.tsx --outdir dist --watch\" \"bunx @tailwindcss/cli -i src/frontend/styles.css -o dist/index.css --watch\""
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.81.2",
     "hono": "^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

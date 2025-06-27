@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ServiceCard from "./ServiceCard";
-import { TailnetHost, Config, Service } from "../types";
+import { Config, Service } from "../types";
 
 interface ServiceGridProps {
   config: Config;

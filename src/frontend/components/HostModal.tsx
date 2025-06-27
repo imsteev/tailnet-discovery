@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "./Button";
 import Modal from "./Modal";
-import { useAsync } from "../hooks/useAsync";
+import { api } from "../api/services";
 
 interface HostModalProps {
   onClose: () => void;
@@ -13,29 +14,25 @@ const HostModal: React.FC<HostModalProps> = ({ onClose, onHostSaved }) => {
     name: "",
     ipAddress: "",
   });
-  const saveHostAsync = useAsync<void>();
+
+  const queryClient = useQueryClient();
+
+  const saveHostMutation = useMutation({
+    mutationFn: api.createHost,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      onHostSaved();
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      await saveHostAsync.execute(async () => {
-        const response = await fetch("/api/hosts", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: formData.name,
-            ip: formData.ipAddress,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to add host");
-        }
+      await saveHostMutation.mutateAsync({
+        name: formData.name,
+        ip: formData.ipAddress,
       });
-      onHostSaved();
     } catch (error) {
       console.error("Error saving host:", error);
     }
@@ -79,8 +76,8 @@ const HostModal: React.FC<HostModalProps> = ({ onClose, onHostSaved }) => {
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={saveHostAsync.loading}>
-            {saveHostAsync.loading ? "Adding..." : "Add Host"}
+          <Button type="submit" disabled={saveHostMutation.isPending}>
+            {saveHostMutation.isPending ? "Adding..." : "Add Host"}
           </Button>
         </div>
       </form>

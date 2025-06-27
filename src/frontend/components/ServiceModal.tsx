@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "./Button";
 import Modal from "./Modal";
 import { Service } from "../types";
-import { useAsync } from "../hooks/useAsync";
+import { api } from "../api/services";
 
 interface ServiceModalProps {
   editingService: Service | null;
@@ -29,8 +30,24 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(
     null,
   );
-  const saveServiceAsync = useAsync<void>();
-  const deleteServiceAsync = useAsync<void>();
+  const queryClient = useQueryClient();
+
+  const saveServiceMutation = useMutation({
+    mutationFn: api.createService,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      onServiceSaved();
+    },
+  });
+
+  const deleteServiceMutation = useMutation({
+    mutationFn: ({ ip, port }: { ip: string; port: number }) =>
+      api.deleteService(ip, port),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      onServiceSaved();
+    },
+  });
 
   useEffect(() => {
     if (editingService) {
@@ -118,29 +135,12 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     }
 
     try {
-      await saveServiceAsync.execute(async () => {
-        const response = await fetch("/api/services", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ip: formData.ipAddress,
-            port: parseInt(formData.portNumber),
-            name: formData.serviceName,
-            host_name: formData.hostName,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(
-            editingService
-              ? "Failed to update service"
-              : "Failed to add service",
-          );
-        }
+      await saveServiceMutation.mutateAsync({
+        ip: formData.ipAddress,
+        port: parseInt(formData.portNumber),
+        name: formData.serviceName,
+        host_name: formData.hostName,
       });
-      onServiceSaved();
     } catch (error) {
       console.error("Error saving service:", error);
     }
@@ -158,19 +158,10 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     }
 
     try {
-      await deleteServiceAsync.execute(async () => {
-        const response = await fetch(
-          `/api/services/${editingService.ip}/${editingService.port}`,
-          {
-            method: "DELETE",
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to delete service");
-        }
+      await deleteServiceMutation.mutateAsync({
+        ip: editingService.ip,
+        port: editingService.port,
       });
-      onServiceSaved();
     } catch (error) {
       console.error("Error deleting service:", error);
     }
@@ -290,16 +281,18 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
               type="button"
               variant="danger"
               onClick={handleDelete}
-              disabled={deleteServiceAsync.loading}
+              disabled={deleteServiceMutation.isPending}
             >
-              {deleteServiceAsync.loading ? "Deleting..." : "Delete"}
+              {deleteServiceMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
           )}
           <Button
             type="submit"
-            disabled={!!portError || isValidating || saveServiceAsync.loading}
+            disabled={
+              !!portError || isValidating || saveServiceMutation.isPending
+            }
           >
-            {saveServiceAsync.loading
+            {saveServiceMutation.isPending
               ? "Saving..."
               : editingService
                 ? "Update Service"

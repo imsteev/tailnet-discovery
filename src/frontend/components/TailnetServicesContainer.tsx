@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ServiceGrid from "./ServiceGrid";
 import ServiceModal from "./ServiceModal";
 import HostModal from "./HostModal";
 import Button from "./Button";
-import { TailnetHost, Config, Service } from "../types";
-import { useAsync } from "../hooks/useAsync";
+import { Service } from "../types";
+import { api } from "../api/services";
 
 const TailnetServicesContainer: React.FC = () => {
-  const [config, setConfig] = useState<Config>({ tailnet_hosts: {} });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHostModalOpen, setIsHostModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
@@ -15,22 +15,32 @@ const TailnetServicesContainer: React.FC = () => {
     ip: string;
     hostName: string;
   } | null>(null);
-  const deleteHostAsync = useAsync<void>();
-  const testServiceAsync = useAsync<{ reachable: boolean }>();
 
-  const loadServices = useCallback(async () => {
-    try {
-      const response = await fetch("/api/services");
-      const data = await response.json();
-      setConfig(data);
-    } catch (error) {
-      console.error("Failed to load config:", error);
-    }
-  }, []);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadServices();
-  }, [loadServices]);
+  // Queries
+  const {
+    data: config = { tailnet_hosts: {} },
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["services"],
+    queryFn: api.getServices,
+  });
+
+  // Mutations
+  const deleteHostMutation = useMutation({
+    mutationFn: api.deleteHost,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+    },
+  });
+
+  const testServiceMutation = useMutation({
+    mutationFn: ({ ip, port }: { ip: string; port: string }) =>
+      api.testService(ip, port),
+  });
 
   const handleAddService = (ip: string, hostName: string) => {
     setEditingService(null);
@@ -54,7 +64,7 @@ const TailnetServicesContainer: React.FC = () => {
     setIsModalOpen(false);
     setEditingService(null);
     setModalPrefilledData(null);
-    loadServices();
+    queryClient.invalidateQueries({ queryKey: ["services"] });
   };
 
   const handleAddHost = () => {
@@ -67,7 +77,7 @@ const TailnetServicesContainer: React.FC = () => {
 
   const handleHostSaved = () => {
     setIsHostModalOpen(false);
-    loadServices();
+    queryClient.invalidateQueries({ queryKey: ["services"] });
   };
 
   const handleDeleteHost = async (ip: string, hostName: string) => {
@@ -80,16 +90,7 @@ const TailnetServicesContainer: React.FC = () => {
     }
 
     try {
-      await deleteHostAsync.execute(async () => {
-        const response = await fetch(`/api/hosts/${ip}`, {
-          method: "DELETE",
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to delete host");
-        }
-      });
-      loadServices();
+      await deleteHostMutation.mutateAsync(ip);
     } catch (error) {
       console.error("Error deleting host:", error);
     }
@@ -97,20 +98,32 @@ const TailnetServicesContainer: React.FC = () => {
 
   const handleTestService = async (ip: string, port: string) => {
     try {
-      const result = await testServiceAsync.execute(async () => {
-        const response = await fetch(`/check/${ip}/${port}`);
-        if (!response.ok) {
-          throw new Error(`Failed to test service ${ip}:${port}`);
-        }
-        return response.json();
-      });
-
+      const result = await testServiceMutation.mutateAsync({ ip, port });
       const status = result.reachable ? "reachable" : "unreachable";
       alert(`Service ${ip}:${port} is ${status}`);
     } catch (error) {
       console.error("Error testing service:", error);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-gray-600">Loading services...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center py-8 gap-4">
+        <div className="text-red-600">Error: {(error as Error).message}</div>
+        <Button onClick={() => refetch()} variant="primary">
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -126,7 +139,7 @@ const TailnetServicesContainer: React.FC = () => {
         onEditService={handleEditService}
         onTestService={handleTestService}
         onDeleteHost={handleDeleteHost}
-        onRefreshConfig={loadServices}
+        onRefreshConfig={() => refetch()}
       />
 
       {isModalOpen && (
