@@ -1,16 +1,6 @@
 import React from "react";
-
-interface TailnetHost {
-  name: string;
-  ports: Record<string, string>;
-}
-
-interface Service {
-  ip: string;
-  port: number;
-  name: string;
-  host_name: string;
-}
+import Button from "./Button";
+import { TailnetHost, Service } from "../types";
 
 interface ServiceCardProps {
   ip: string;
@@ -52,13 +42,13 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
     <div className="bg-white border border-gray-300 my-5 p-5 rounded-lg shadow-sm">
       <div className="flex justify-between items-center mb-2.5">
         <div className="text-lg font-bold text-primary-500">{host.name}</div>
-        <button
-          className="bg-danger-500 text-white border-none px-2 py-1 rounded text-xs cursor-pointer hover:bg-danger-600 transition-colors"
+        <Button
+          variant="danger"
+          size="sm"
           onClick={() => onDeleteHost(ip, host.name)}
-          title="Delete Host"
         >
           Delete
-        </button>
+        </Button>
       </div>
       <div className="text-gray-500 text-sm">{ip}</div>
       <div className="mt-4">
@@ -86,8 +76,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
               <span className={getStatusClass(ip, port)}>
                 {getStatusText(ip, port)}
               </span>
-              <button
-                className="bg-warning-500 text-white border-none px-2 py-1 rounded text-xs cursor-pointer hover:bg-warning-600 transition-colors"
+              <Button
+                variant="warning"
+                size="sm"
                 onClick={() =>
                   onEditService({
                     ip,
@@ -98,22 +89,25 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
                 }
               >
                 Edit
-              </button>
-              <button
-                className="bg-primary-500 text-white border-none px-2 py-1 rounded text-xs cursor-pointer hover:bg-primary-600 transition-colors"
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => onTestService(ip, port)}
               >
                 Test
-              </button>
+              </Button>
             </div>
           </div>
         ))}
-        <button
-          className="bg-success-500 text-white border-none px-3 py-2 rounded text-xs mt-2.5 cursor-pointer hover:bg-success-600 transition-colors"
+        <Button
+          variant="success"
+          size="sm"
           onClick={() => onAddService(ip, host.name)}
+          className="mt-2.5"
         >
           + Add Service
-        </button>
+        </Button>
       </div>
     </div>
   );

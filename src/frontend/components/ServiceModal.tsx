@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from "react";
-
-interface Service {
-  ip: string;
-  port: number;
-  name: string;
-  host_name: string;
-}
+import Button from "./Button";
+import Modal from "./Modal";
+import { Service } from "../types";
+import { useAsync } from "../hooks/useAsync";
 
 interface ServiceModalProps {
   editingService: Service | null;
@@ -32,6 +29,8 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(
     null,
   );
+  const saveServiceAsync = useAsync<void>();
+  const deleteServiceAsync = useAsync<void>();
 
   useEffect(() => {
     if (editingService) {
@@ -119,29 +118,31 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     }
 
     try {
-      const response = await fetch("/api/services", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ip: formData.ipAddress,
-          port: parseInt(formData.portNumber),
-          name: formData.serviceName,
-          host_name: formData.hostName,
-        }),
-      });
+      await saveServiceAsync.execute(async () => {
+        const response = await fetch("/api/services", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ip: formData.ipAddress,
+            port: parseInt(formData.portNumber),
+            name: formData.serviceName,
+            host_name: formData.hostName,
+          }),
+        });
 
-      if (response.ok) {
-        onServiceSaved();
-      } else {
-        alert(
-          editingService ? "Failed to update service" : "Failed to add service",
-        );
-      }
+        if (!response.ok) {
+          throw new Error(
+            editingService
+              ? "Failed to update service"
+              : "Failed to add service",
+          );
+        }
+      });
+      onServiceSaved();
     } catch (error) {
       console.error("Error saving service:", error);
-      alert("Error saving service");
     }
   };
 
@@ -157,21 +158,21 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     }
 
     try {
-      const response = await fetch(
-        `/api/services/${editingService.ip}/${editingService.port}`,
-        {
-          method: "DELETE",
-        },
-      );
+      await deleteServiceAsync.execute(async () => {
+        const response = await fetch(
+          `/api/services/${editingService.ip}/${editingService.port}`,
+          {
+            method: "DELETE",
+          },
+        );
 
-      if (response.ok) {
-        onServiceSaved();
-      } else {
-        alert("Failed to delete service");
-      }
+        if (!response.ok) {
+          throw new Error("Failed to delete service");
+        }
+      });
+      onServiceSaved();
     } catch (error) {
       console.error("Error deleting service:", error);
-      alert("Error deleting service");
     }
   };
 
@@ -203,126 +204,110 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     }
   };
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   return (
-    <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
-      onClick={handleOverlayClick}
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title={editingService ? "Edit Service" : "Add New Service"}
     >
-      <div className="bg-white p-5 rounded-lg w-96 max-w-[90%]">
-        <h3 className="text-lg font-semibold mb-4">
-          {editingService ? "Edit Service" : "Add New Service"}
-        </h3>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block mb-1.5 font-medium text-sm">
-              Host Name:
-            </label>
-            <input
-              type="text"
-              name="hostName"
-              value={formData.hostName}
-              onChange={handleChange}
-              required
-              readOnly
-              className="w-full p-2 border border-gray-300 rounded box-border bg-gray-50 focus:outline-none"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-1.5 font-medium text-sm">
-              IP Address:
-            </label>
-            <input
-              type="text"
-              name="ipAddress"
-              value={formData.ipAddress}
-              onChange={handleChange}
-              required
-              readOnly
-              className="w-full p-2 border border-gray-300 rounded box-border bg-gray-50 focus:outline-none"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-1.5 font-medium text-sm">Port:</label>
-            <input
-              type="number"
-              name="portNumber"
-              value={formData.portNumber}
-              onChange={handleChange}
-              required
-              readOnly={!!editingService}
-              className={`w-full p-2 border rounded box-border focus:outline-none ${
-                editingService
-                  ? "bg-gray-50 border-gray-300"
-                  : portError
-                    ? "border-red-500 focus:ring-2 focus:ring-red-500"
-                    : portSuccess
-                      ? "border-green-500 focus:ring-2 focus:ring-green-500"
-                      : "border-gray-300 focus:ring-2 focus:ring-primary-500"
-              }`}
-            />
-            {portError && (
-              <p className="text-red-500 text-sm mt-1">{portError}</p>
-            )}
-            {portSuccess && (
-              <p className="text-green-500 text-sm mt-1">{portSuccess}</p>
-            )}
-            {isValidating && (
-              <p className="text-gray-500 text-sm mt-1">
-                Checking availability...
-              </p>
-            )}
-          </div>
-          <div className="mb-4">
-            <label className="block mb-1.5 font-medium text-sm">
-              Service Name:
-            </label>
-            <input
-              type="text"
-              name="serviceName"
-              value={formData.serviceName}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded box-border focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <div className="flex gap-2.5 justify-end">
-            <button
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block mb-1.5 font-medium text-sm">Host Name:</label>
+          <input
+            type="text"
+            name="hostName"
+            value={formData.hostName}
+            onChange={handleChange}
+            required
+            readOnly
+            className="w-full p-2 border border-gray-300 rounded box-border bg-gray-50 focus:outline-none"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-1.5 font-medium text-sm">
+            IP Address:
+          </label>
+          <input
+            type="text"
+            name="ipAddress"
+            value={formData.ipAddress}
+            onChange={handleChange}
+            required
+            readOnly
+            className="w-full p-2 border border-gray-300 rounded box-border bg-gray-50 focus:outline-none"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-1.5 font-medium text-sm">Port:</label>
+          <input
+            type="number"
+            name="portNumber"
+            value={formData.portNumber}
+            onChange={handleChange}
+            required
+            readOnly={!!editingService}
+            className={`w-full p-2 border rounded box-border focus:outline-none ${
+              editingService
+                ? "bg-gray-50 border-gray-300"
+                : portError
+                  ? "border-red-500 focus:ring-2 focus:ring-red-500"
+                  : portSuccess
+                    ? "border-green-500 focus:ring-2 focus:ring-green-500"
+                    : "border-gray-300 focus:ring-2 focus:ring-primary-500"
+            }`}
+          />
+          {portError && (
+            <p className="text-red-500 text-sm mt-1">{portError}</p>
+          )}
+          {portSuccess && (
+            <p className="text-green-500 text-sm mt-1">{portSuccess}</p>
+          )}
+          {isValidating && (
+            <p className="text-gray-500 text-sm mt-1">
+              Checking availability...
+            </p>
+          )}
+        </div>
+        <div className="mb-4">
+          <label className="block mb-1.5 font-medium text-sm">
+            Service Name:
+          </label>
+          <input
+            type="text"
+            name="serviceName"
+            value={formData.serviceName}
+            onChange={handleChange}
+            required
+            className="w-full p-2 border border-gray-300 rounded box-border focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+        </div>
+        <div className="flex gap-2.5 justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          {editingService && (
+            <Button
               type="button"
-              className="bg-gray-500 text-white border-none py-2 px-4 rounded cursor-pointer hover:bg-gray-600 transition-colors"
-              onClick={onClose}
+              variant="danger"
+              onClick={handleDelete}
+              disabled={deleteServiceAsync.loading}
             >
-              Cancel
-            </button>
-            {editingService && (
-              <button
-                type="button"
-                className="bg-danger-500 text-white border-none py-2 px-4 rounded cursor-pointer hover:bg-danger-600 transition-colors"
-                onClick={handleDelete}
-              >
-                Delete
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={!!portError || isValidating}
-              className={`py-2 px-4 rounded border-none transition-colors ${
-                portError || isValidating
-                  ? "bg-gray-400 text-white cursor-not-allowed"
-                  : "bg-primary-500 text-white cursor-pointer hover:bg-primary-600"
-              }`}
-            >
-              {editingService ? "Update Service" : "Add Service"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+              {deleteServiceAsync.loading ? "Deleting..." : "Delete"}
+            </Button>
+          )}
+          <Button
+            type="submit"
+            disabled={!!portError || isValidating || saveServiceAsync.loading}
+          >
+            {saveServiceAsync.loading
+              ? "Saving..."
+              : editingService
+                ? "Update Service"
+                : "Add Service"}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };
 

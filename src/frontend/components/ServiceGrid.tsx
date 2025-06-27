@@ -1,21 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ServiceCard from "./ServiceCard";
-
-interface TailnetHost {
-  name: string;
-  ports: Record<string, string>;
-}
-
-interface Config {
-  tailnet_hosts: Record<string, TailnetHost>;
-}
-
-interface Service {
-  ip: string;
-  port: number;
-  name: string;
-  host_name: string;
-}
+import { TailnetHost, Config, Service } from "../types";
 
 interface ServiceGridProps {
   config: Config;

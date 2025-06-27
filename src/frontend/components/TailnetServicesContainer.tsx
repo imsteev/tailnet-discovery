@@ -2,22 +2,9 @@ import React, { useState, useEffect, useCallback } from "react";
 import ServiceGrid from "./ServiceGrid";
 import ServiceModal from "./ServiceModal";
 import HostModal from "./HostModal";
-
-interface TailnetHost {
-  name: string;
-  ports: Record<string, string>;
-}
-
-interface Config {
-  tailnet_hosts: Record<string, TailnetHost>;
-}
-
-interface Service {
-  ip: string;
-  port: number;
-  name: string;
-  host_name: string;
-}
+import Button from "./Button";
+import { TailnetHost, Config, Service } from "../types";
+import { useAsync } from "../hooks/useAsync";
 
 const TailnetServicesContainer: React.FC = () => {
   const [config, setConfig] = useState<Config>({ tailnet_hosts: {} });
@@ -28,6 +15,8 @@ const TailnetServicesContainer: React.FC = () => {
     ip: string;
     hostName: string;
   } | null>(null);
+  const deleteHostAsync = useAsync<void>();
+  const testServiceAsync = useAsync<{ reachable: boolean }>();
 
   const loadServices = useCallback(async () => {
     try {
@@ -91,42 +80,44 @@ const TailnetServicesContainer: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`/api/hosts/${ip}`, {
-        method: "DELETE",
-      });
+      await deleteHostAsync.execute(async () => {
+        const response = await fetch(`/api/hosts/${ip}`, {
+          method: "DELETE",
+        });
 
-      if (response.ok) {
-        loadServices();
-      } else {
-        alert("Failed to delete host");
-      }
+        if (!response.ok) {
+          throw new Error("Failed to delete host");
+        }
+      });
+      loadServices();
     } catch (error) {
       console.error("Error deleting host:", error);
-      alert("Error deleting host");
     }
   };
 
   const handleTestService = async (ip: string, port: string) => {
     try {
-      const response = await fetch(`/check/${ip}/${port}`);
-      const result = await response.json();
+      const result = await testServiceAsync.execute(async () => {
+        const response = await fetch(`/check/${ip}/${port}`);
+        if (!response.ok) {
+          throw new Error(`Failed to test service ${ip}:${port}`);
+        }
+        return response.json();
+      });
+
       const status = result.reachable ? "reachable" : "unreachable";
       alert(`Service ${ip}:${port} is ${status}`);
     } catch (error) {
       console.error("Error testing service:", error);
-      alert(`Error testing service ${ip}:${port}`);
     }
   };
 
   return (
     <>
       <div className="flex gap-2.5 mb-5">
-        <button
-          className="bg-primary-500 text-white border-none py-2.5 px-5 rounded-md cursor-pointer hover:bg-primary-600 transition-colors"
-          onClick={handleAddHost}
-        >
+        <Button onClick={handleAddHost} size="lg">
           Add Host
-        </button>
+        </Button>
       </div>
 
       <ServiceGrid
