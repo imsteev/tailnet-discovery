@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import ServiceGrid from "./ServiceGrid";
 import ServiceModal from "./ServiceModal";
 import HostModal from "./HostModal";
@@ -16,8 +16,6 @@ const TailnetServicesContainer: React.FC = () => {
     hostName: string;
   } | null>(null);
 
-  const queryClient = useQueryClient();
-
   // Queries
   const {
     data: config = { tailnet_hosts: {} },
@@ -33,7 +31,7 @@ const TailnetServicesContainer: React.FC = () => {
   const deleteHostMutation = useMutation({
     mutationFn: api.deleteHost,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
+      refetch();
     },
   });
 
@@ -64,7 +62,7 @@ const TailnetServicesContainer: React.FC = () => {
     setIsModalOpen(false);
     setEditingService(null);
     setModalPrefilledData(null);
-    queryClient.invalidateQueries({ queryKey: ["services"] });
+    refetch();
   };
 
   const handleAddHost = () => {
@@ -77,7 +75,7 @@ const TailnetServicesContainer: React.FC = () => {
 
   const handleHostSaved = () => {
     setIsHostModalOpen(false);
-    queryClient.invalidateQueries({ queryKey: ["services"] });
+    refetch();
   };
 
   const handleDeleteHost = async (ip: string, hostName: string) => {
@@ -148,6 +146,7 @@ const TailnetServicesContainer: React.FC = () => {
           prefilledData={modalPrefilledData}
           onClose={handleCloseModal}
           onServiceSaved={handleServiceSaved}
+          refetchServices={refetch}
         />
       )}
 
@@ -155,6 +154,7 @@ const TailnetServicesContainer: React.FC = () => {
         <HostModal
           onClose={handleHostModalClose}
           onHostSaved={handleHostSaved}
+          refetchServices={refetch}
         />
       )}
     </>

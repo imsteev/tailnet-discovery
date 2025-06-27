@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import Button from "./Button";
 import Modal from "./Modal";
 import { api } from "../api/services";
@@ -7,20 +7,23 @@ import { api } from "../api/services";
 interface HostModalProps {
   onClose: () => void;
   onHostSaved: () => void;
+  refetchServices: () => void;
 }
 
-const HostModal: React.FC<HostModalProps> = ({ onClose, onHostSaved }) => {
+const HostModal: React.FC<HostModalProps> = ({
+  onClose,
+  onHostSaved,
+  refetchServices,
+}) => {
   const [formData, setFormData] = useState({
     name: "",
     ipAddress: "",
   });
 
-  const queryClient = useQueryClient();
-
   const saveHostMutation = useMutation({
     mutationFn: api.createHost,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
+      refetchServices();
       onHostSaved();
     },
   });

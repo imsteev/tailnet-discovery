@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import Button from "./Button";
 import Modal from "./Modal";
 import { Service } from "../types";
@@ -10,6 +10,7 @@ interface ServiceModalProps {
   prefilledData: { ip: string; hostName: string } | null;
   onClose: () => void;
   onServiceSaved: () => void;
+  refetchServices: () => void;
 }
 
 const ServiceModal: React.FC<ServiceModalProps> = ({
@@ -17,6 +18,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   prefilledData,
   onClose,
   onServiceSaved,
+  refetchServices,
 }) => {
   const [formData, setFormData] = useState({
     hostName: "",
@@ -30,12 +32,10 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(
     null,
   );
-  const queryClient = useQueryClient();
-
   const saveServiceMutation = useMutation({
     mutationFn: api.createService,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
+      refetchServices();
       onServiceSaved();
     },
   });
@@ -44,7 +44,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     mutationFn: ({ ip, port }: { ip: string; port: number }) =>
       api.deleteService(ip, port),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services"] });
+      refetchServices();
       onServiceSaved();
     },
   });
